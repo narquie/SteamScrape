@@ -16,7 +16,7 @@ def scrape_website(overall_dict,stack):
     name_box = soup.find('script',attrs={'language': 'javascript'})
     if name_box is None:
         stack.pop()
-        return(overall_dict,stack)
+        return(overall_dict,stack,None,None)
     name = name_box.text
     print(name)
     p = re.compile('"name":"(.*?)"')
@@ -33,7 +33,7 @@ def scrape_website(overall_dict,stack):
     name_box = soup.find("div" ,id="BG_bottom")
     if name_box is None:
         stack.pop()
-        return(overall_dict,stack)
+        return(overall_dict,stack,None,None)
     print(name_box)
     name = name_box.find_all('a')
     print(name)
@@ -46,8 +46,6 @@ def scrape_website(overall_dict,stack):
         if i not in overall_dict:
             stack.append(i)
         overall_dict[i] = 1
-    # To not DDOS steam
-    time.sleep(5)
     return(overall_dict,stack,game_list,game_hours_list)
 
 #INIT
@@ -66,29 +64,65 @@ pairs_dict = {}
 # friend not in hash table
 # repeat until stack is empty or 10,000
 # users have been queried
-while(len(stack)!= 0 and count != 10):
+while(len(stack)!= 0 and count != 1000):
     overall_dict, stack, game_list,game_hours_list = scrape_website(overall_dict,stack)
-    for i in range(0,min([len(game_list),len(game_hours_list)])):
-        print(i)
-        print(len(game_list))
-        print(len(game_hours_list))
-        # Organize the data: should be fields [player,game,hoursplayed]
-        cleaned_initial_list.append([count,game_list[i],game_hours_list[i]])
-        # Create a ratio of total hours played for a game
-        # over sum of total hours played by all games by a
-        # user.
-        ratio_of_hours.append([count,game_list[i],(game_hours_list[i]/sum(game_hours_list))])
-    # Create 10C2 of top 10 games played and pair them
-    # with another game (for 45? combinations). Make a
-    # count of the highest paired games
-    temp_list = []
-    for i in range(0,10):
-        for j in range(0,10):
-            if (i < j):
-                temp_list = [game_list[i],game_list[j]]
-                temp_list.sort()
-                if (temp_list[0]+temp_list[1]) not in pairs_dict:
-                    pairs_dict[(temp_list[0]+temp_list[1])]=1
-                else:
-                    pairs_dict[(temp_list[0]+temp_list[1])]+=1
-    count += 1
+    # To not DDOS steam
+    time.sleep(15)
+    if(game_list is not None and game_hours_list is not None):
+        for i in range(0,min([len(game_list),len(game_hours_list)])):
+            #print(i)
+            #print(len(game_list))
+            #print(len(game_hours_list))
+            # Organize the data: should be fields [player,game,hoursplayed]
+            cleaned_initial_list.append([count,game_list[i],game_hours_list[i]])
+            # Create a ratio of total hours played for a game
+            # over sum of total hours played by all games by a
+            # user.
+            ratio_of_hours.append([count,game_list[i],(game_hours_list[i]/sum(game_hours_list))])
+        # Create 10C2 of top 10 games played and pair them
+        # with another game (for 45? combinations). Make a
+        # count of the highest paired games
+        temp_list = []
+        for i in range(0,10):
+            for j in range(0,10):
+                if (i < j and i < len(game_list) and j < len(game_list)):
+                    temp_list = [game_list[i],game_list[j]]
+                    temp_list.sort()
+                    if (temp_list[0]+temp_list[1]) not in pairs_dict:
+                        pairs_dict[(temp_list[0]+","+temp_list[1])]=1
+                    else:
+                        pairs_dict[(temp_list[0]+","+temp_list[1])]+=1
+        count += 1
+
+# Changed to pandas dataframe
+# init
+pandas_dict_init = {}
+pandas_dict_init["user"] = []
+pandas_dict_init["game_name"] = []
+pandas_dict_init["game_hours"] = []
+for i in cleaned_initial_list:
+    pandas_dict_init["user"].append(i[0])
+    pandas_dict_init["game_name"].append(i[1])
+    pandas_dict_init["game_hours"].append(i[2])
+df_init = pandas.DataFrame(data=pandas_dict_init)
+# Ratio of hours
+pandas_dict_ratio = {}
+pandas_dict_ratio["user"] = []
+pandas_dict_ratio["game_name"] = []
+pandas_dict_ratio["ratio_played"] = []
+for i in ratio_of_hours:
+    pandas_dict_ratio["user"].append(i[0])
+    pandas_dict_ratio["game_name"].append(i[1])
+    pandas_dict_ratio["ratio_played"].append(i[2])
+df_ratio = pandas.DataFrame(data=pandas_dict_ratio)
+# 10c2
+pandas_choose_two = {}
+pandas_choose_two["games"] = []
+pandas_choose_two["count"] = []
+for i in pairs_dict.keys():
+    pandas_choose_two["games"].append(i)
+    pandas_choose_two["count"].append(pairs_dict[i])
+df_c2 = pandas.DataFrame(data=pandas_choose_two)
+df_init.to_csv("Initial_CSV.csv")
+df_ratio.to_csv("Ratio_CSV.csv")
+df_c2.to_csv("C2_CSV.csv")
