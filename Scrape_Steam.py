@@ -1,19 +1,13 @@
-overall_dict = {}
-queue = []
-count = 0
-games_url_base = "games/?tab=all"
-friends_url_base = "friends/"
-
-while(len(queue)!= 0):
-    scrape_website(overall_dict,queue)
+import urllib2
+import re
+from bs4 import BeautifulSoup
 # Function that scrapes steam and returns
 # 1) Game name list (game_list)
 # 2) Game hours list (game_hours_list)
 # 3) Friends url (friends_url)
 def scrape_website(overall_dict,queue):
-    import urllib2
-    import re
-    from bs4 import BeautifulSoup
+    games_url_base = "games/?tab=all"
+    friends_url_base = "friends/"
     games_page = 'http://steamcommunity.com/id/stabstabstab/games/?tab=all'
     page = urllib2.urlopen(games_page)
     soup = BeautifulSoup(page, 'html.parser')
@@ -38,6 +32,13 @@ def scrape_website(overall_dict,queue):
     p = re.compile('href="(.*?)"')
     friends_url = p.findall(str(name))
     print(friends_url)
+
+overall_dict = {}
+queue = []
+count = 0
+#while(len(queue)!= 0):
+scrape_website(overall_dict,queue)
+
 # Create  hash table with all urls
 # Call function for each url
 # Add to hash table for each friends url
