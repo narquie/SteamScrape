@@ -40,8 +40,11 @@ count = 0
 scrape_website(overall_dict,queue)
 
 # Create  hash table with all urls
-# Call function for each url
-# Add to hash table for each friends url
+# Call function for each url in queue
+# Add to queue for each friends url if
+# friend not in hash table
+# repeat until queue is empty or 10,000
+# users have been queried
 
 # Create a ratio of total hours played for a game
 # over sum of total hours played by all games by a
@@ -50,3 +53,7 @@ scrape_website(overall_dict,queue)
 # Create 10C2 of top 10 games played and pair them
 # with another game (for 45? combinations). Make a
 # count of the highest paired games
+
+# Organize the data: should be fields [player,game,hoursplayed]
+
+# Make second data source with fields: [player,pairoftop10games]
